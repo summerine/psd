@@ -74,16 +74,18 @@ else {
  	 	  }
  	 	?>
 
- 	 	<form class="mr-3" action="index.php"  method="POST">
+ 	 	<form class="mr-3" action="index.php" method="POST">
  	 		<div class="form-row">
  	 			<!-- form cari -->
  	 			<div class="col-3">
- 	 				<input type="text" name="form-control" name="cari" placeholder="Cari NIS atau Nama Siswa" value="<?php echo $cari; ?>">
+ 	 				<input type="text" class="form-control" name="cari" placeholder="Cari NIS atau Nama Siswa" value="<?php echo $cari; ?>">
  	 			</div>
+
  	 			<!-- tombol cari -->
  	 			<div class="col-8">
  	 				<button type="submit" class="btn btn-info">Cari</button>
  	 			</div>
+
  	 		<!-- tombol tambah data -->
  	 			<div class="col">
  	 				<a class="btn btn-info" href="?page=tambah" role="button"><i class="fas fa-plus"></i>Tambah</a>
@@ -92,6 +94,138 @@ else {
  	 	</form>
 
  	 	<!-- tabel untuk menampilkan data siswa -->
- 	 	
+ 	 	<table class="table table-striped table-bordered">
+ 	 		<thead>
+ 	 			<tr>
+ 	 				<th>No.</th>
+ 	 				<th>Foto</th>
+ 	 				<th>NIS</th>
+ 	 				<th>Nama Siswa</th>
+ 	 				<th>Tempat, TanggaL Lahir</th>
+ 	 				<th>Jenis Kelamin</th>
+ 	 				<th>Agama</th>
+ 	 				<th>Alamat</th>
+ 	 				<th>No. HP</th>
+ 	 				
+ 	 			</tr>
+ 	 		</thead>
+
+ 	 		<tbody>
+ 	 			<?php 
+
+ 	 			//pagination
+
+ 	 			$batas = 5;
+
+ 	 			if (isset($cari)) {
+ 	 				//perintah query untuk menampilkan jumlah data siswa dari database berdasarkan nis atau nama yang sesuai dengan kata kucni pencarian 
+
+ 	 				$query_jumlah = mysqli_query($db, "SELECT COUNT(nis) AS jumlah FROM tbl_siswa WHERE nis LIKE '%cari' OR nama LIKE '%cari'")
+ 	 				or die('Ada kesalahan pada query jumlah:'.mysqli_error($db));
+ 	 			}
+
+ 	 				//jika tidak dilakukan pencarian data 
+ 	 			else {
+ 	 				$query_jumlah = mysqli_query($db, "SELECT COUNT(nis) AS jumlah FROM tbl_siswa")
+ 	 				or die('Ada kesalaham pada query jumlah:'.mysqli_error($db));
+ 	 			}
+
+ 	 			//tampilkan jumlah data 
+ 	 			$data_jumlah = mysqli_fetch_assoc($query_jumlah);
+ 	 			$jumlah = $data_jumlah['jumlah'];
+ 	 			$halaman = ceil($jumlah / $batas);
+ 	 			$page = (isset($_GET['hal'])) ? (int)$_GET['hal'] : 1;
+ 	 			$mulai = ($page - 1) * $batas; 
+
+ 	 			//nomor urut tabel 
+ 	 			$no = $mulai + 1;
+
+ 	 			if (isset($cari)) {
+ 	 				//perintah query untuk menampilkan data siswa dari database berdasarkan nis atau nama yang sesuai dengan kata kunci pencarian
+ 	 				// data yang ditampilkan mulai = $mulai sampai dengan batas = $batas
+ 	 				$query = mysqli_query($db, "SELECT * FROM tbl_siswa WHERE nis LIKE '%cari' OR nama LIKE '%cari' ORDER BY nis DESC LIMIT $mulai, $batas")
+ 	 				or die('Ada kesalahan pada query siswa:'.mysqli_error($db));
+ 	 			}
+
+ 	 			else {
+ 	 				$query = mysqli_query($db, "SELECT * FROM tbl_siswa ORDER BY nis DESC LIMIT $mulai, $batas")
+ 	 				or die('Ada kesalaha pada query siswa:'.mysqli_error($db));
+ 	 			} 
+
+ 	 			while ($data = mysqli_fetch_assoc($query)) { ?>
+ 	 				<tr>
+ 	 					<td width="30" class="center"><?php echo $no; ?></td>
+ 	 					<td width="45"><img class="foto-thumbnail" src='foto/<?php echo $data['foto'] ?>' alt="Foto Siswa"></td>
+ 	 					<td width="80" class="center"><?php echo $data['nis']; ?></td>
+ 	 					<td width="180"><?php echo $data['nama']; ?></td>
+ 	 					<td width="180"><?php echo $data['tempat_lahir']; ?>, <?php echo date('d-m-Y', strtotime($data['tanggal_lahir'])); ?></td>
+ 	 					<td width="120"><?php echo $data['jenis_kelamin']; ?></td>
+ 	 					<td width="100"><?php echo $data['agama']; ?></td>
+ 	 					<td width="180"><?php echo $data['alamat'] ?></td>
+ 	 					<td width="70" class="center"><?php echo $data['no_hp']; ?></td>
+ 	 					<td width="120" class="center">
+ 	 						<a title="Ubah" class="btn btn-outline-info" href="?page=ubah&nis=<?php echo $data['nis']; ?>"><i class="fas fa-edit"></i></a>
+ 	 						<a title="Hapus" class="btn btn-outline-danger" href="proses_hapus.php?nis=<?php echo $data['nis'] ?>" onclick = "return confirm('Anda yakin ingin menghapus siswa <?php echo $data['nama']; ?>?');"><i class="fas fa-trash"></i></a>
+ 	 					</td>
+ 	 				</tr>
+ 	 				<?php 
+ 	 				$no++;
+ 	 				}
+ 	 			 ?>
+ 	 		</tbody>
+ 	 	</table>
+
+ 	 	<!-- Pagination -->
+ 	 	<?php 
+ 	 	if (empty($_GET['hal'])) {
+ 	 		$halaman_aktif = 1;
+ 	 	}
+ 	 	 else {
+ 	 	 	$halaman_aktif = $_GET['hal'];
+ 	 	 }
+ 	 	 ?>
+ 	 	 <div class="row">
+ 	 	 	<div class="col">
+ 	 	 		<!-- tampilkan informasi jumlah halaman dan jumlah data -->
+ 	 	 		<a>
+ 	 	 			Halaman <?php echo $halaman_aktif; ?> dari <?php echo $halaman; ?> - Total <?php echo $jumlah; ?> data
+ 	 	 		</a>
+ 	 	 	</div>
+ 	 	 	<div class="col">
+ 	 	 		<nav aria-label="Page navigation example">
+ 	 	 			<ul class="pagination justify-content-end">
+ 	 	 				<!-- Button untuk halaman sebelumnya -->
+ 	 	 				<?php 
+
+ 	 	 				//jika halaman aktif = 0 atau 1 maka button sebelumnya = disable 
+ 	 	 				if ($halaman_aktif<='1') { ?>
+ 	 	 					<li class="page-item disabled"><span class="page-link">Sebelumnya</span></li>
+ 	 	 				<?php 
+ 	 	 				}
+ 	 	 				//jika halaman aktif > 1, maka button sebelumnya aktif
+ 	 	 				else { ?>
+ 	 	 				<li class="page-item"><a class="page-link" href="?hal=<?php echo $page -1 ?>">Sebelumnya</a></li><?php } ?>
+
+ 	 	 				<!-- Button untuk link halaman 1, 2, 3, dst... -->
+ 	 	 				<?php 
+ 	 	 				for ($x=1; $x <=$halaman ; $x++) { ?> 
+ 	 	 				<li class="page-item"><a class="page-link" href="?hal=<?php echo $x ?>"><?php echo $x ?></a></li>
+ 	 	 				<?php } ?>
+
+ 	 	 				<!-- Button untuk halaman selanjutnya -->
+ 	 	 				<?php 
+ 	 	 				//jika halaman aktif >= jumlah halaman, maka button selanjutnya = disable 
+ 	 	 				if ($halaman_aktif<=$halaman) { ?>
+ 	 	 					<li class="page-item disabled"><span class="page-link">Selanjutnya</span></li>
+ 	 	 				<?php
+ 	 	 				}
+
+ 	 	 				else { ?>
+ 	 	 				 <li class="page-item"><a class="page-link" href="?hal=<?php echo $page +1 ?>">Selanjutnya</a></li>
+ 	 	 				<?php } ?>
+ 	 	 			</ul>
+ 	 	 		</nav>
+ 	 	 	</div>
+ 	 	 </div>
  	</div>
  </div>
